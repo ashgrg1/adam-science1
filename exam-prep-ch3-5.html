@@ -1,0 +1,283 @@
+<title>Adam's Science Exam Prep</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Layout: lab-notebook grid page; chapter picker → one question card at a time → report card with per-chapter bars */
+:root{
+  --ink:#14323B; --ink-soft:#4d6a72;
+  --paper:#E8F4F3; --grid:rgba(15,181,174,.08);
+  --card:#FFFFFF; --line:#CFE6E4;
+  --teal:#0FB5AE; --teal-dark:#0A8C87; --teal-tint:#DBF3F1;
+  --sun:#FFC531; --sun-tint:#FFF6D8;
+  --cobalt:#3B82D9; --magenta:#F0567A; --green:#1F9E57;
+  --ok-bg:#E4F7EC; --no-bg:#FDE4EA;
+  --c3:#F07A3B; --c4:#E6A800; --c5:#7A5AE0;
+  --shadow:0 6px 0 rgba(20,50,59,.14);
+  --f-display:'Fredoka',system-ui,sans-serif;
+  --f-body:'Nunito',system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --ink:#E4F3F1; --ink-soft:#9DB9BF; --paper:#0F2328; --grid:rgba(15,181,174,.10);
+  --card:#17333A; --line:#2A4D55; --teal-tint:#123F42; --sun-tint:#3A3218;
+  --ok-bg:#163D2A; --no-bg:#43202A; --green:#4CCB83; --shadow:0 6px 0 rgba(0,0,0,.35); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --ink:#E4F3F1; --ink-soft:#9DB9BF; --paper:#0F2328; --grid:rgba(15,181,174,.10);
+  --card:#17333A; --line:#2A4D55; --teal-tint:#123F42; --sun-tint:#3A3218;
+  --ok-bg:#163D2A; --no-bg:#43202A; --green:#4CCB83; --shadow:0 6px 0 rgba(0,0,0,.35); color-scheme:dark}
+*{box-sizing:border-box}
+body{font-family:var(--f-body);color:var(--ink);background-color:var(--paper);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:26px 26px;line-height:1.5;font-size:16px}
+.wrap{max-width:760px;margin:0 auto;padding:18px 16px 110px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0}
+button{font:inherit;color:inherit}
+button:focus-visible{outline:3px solid var(--cobalt);outline-offset:2px}
+
+header.top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--card);
+  border:3px solid var(--ink);border-radius:22px;padding:14px 18px;box-shadow:var(--shadow)}
+.mascot{width:54px;height:54px;flex:0 0 auto}
+.tb{flex:1 1 200px;min-width:0}
+h1{font-size:1.6rem;line-height:1.1}
+.tag{display:inline-block;margin-top:6px;font-size:.72rem;font-weight:800;letter-spacing:.03em;color:var(--teal-dark);background:var(--teal-tint);border-radius:20px;padding:3px 10px}
+.chip{display:flex;align-items:center;gap:8px;background:var(--ink);color:var(--paper);border-radius:16px;padding:8px 14px;font-family:var(--f-display);font-weight:600}
+.chip b{color:var(--sun);font-size:1.2rem;font-variant-numeric:tabular-nums}
+
+.card{background:var(--card);border:3px solid var(--ink);border-radius:22px;padding:20px;box-shadow:var(--shadow);margin-top:18px}
+.sub{color:var(--ink-soft);margin:4px 0 16px}
+
+/* chapter picker */
+.chapters{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.ch{text-align:left;cursor:pointer;background:var(--card);border:3px solid var(--ink);border-radius:18px;padding:14px;
+  display:flex;flex-direction:column;gap:6px;transition:transform .12s;border-top-width:10px}
+.ch:hover{transform:translateY(-3px)}
+.ch .who{font-size:2rem;line-height:1}
+.ch h3{font-size:1.1rem}
+.ch .topics{font-size:.86rem;color:var(--ink-soft)}
+.ch .best{font-size:.78rem;font-weight:800;color:var(--teal-dark);margin-top:auto}
+.ch.c3{border-top-color:var(--c3)} .ch.c4{border-top-color:var(--c4)} .ch.c5{border-top-color:var(--c5)}
+.ch.exam{background:var(--sun-tint);border-top-color:var(--teal);grid-column:1/-1}
+.ch.exam .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+
+/* quiz */
+.qhead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;font-family:var(--f-display);font-weight:600;color:var(--ink-soft)}
+.pill{font-size:.78rem;font-weight:700;border-radius:20px;padding:3px 10px;color:#fff}
+.pill.c3{background:var(--c3)} .pill.c4{background:#B98700} .pill.c5{background:var(--c5)}
+.bar{height:12px;background:var(--line);border-radius:10px;overflow:hidden;margin:10px 0 14px}
+.bar i{display:block;height:100%;background:var(--teal);border-radius:10px;transition:width .3s}
+.qtext{font-family:var(--f-display);font-weight:600;font-size:1.25rem;margin:4px 0 14px}
+.opt{display:flex;gap:12px;align-items:center;width:100%;text-align:left;background:var(--card);border:3px solid var(--ink);
+  border-radius:14px;padding:12px 14px;margin-bottom:10px;cursor:pointer;font-weight:700;transition:transform .1s}
+.opt .k{flex:0 0 30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--teal-tint);color:var(--teal-dark);font-family:var(--f-display);font-weight:700}
+.opt:hover:not(:disabled){transform:translateX(4px)}
+.opt:disabled{cursor:default}
+.opt.correct{background:var(--ok-bg);border-color:var(--green)}
+.opt.wrong{background:var(--no-bg);border-color:var(--magenta)}
+.fb{border-radius:14px;padding:12px 14px;margin:4px 0 14px;font-weight:700}
+.fb.ok{background:var(--ok-bg);border:2px solid var(--green)}
+.fb.no{background:var(--no-bg);border:2px solid var(--magenta)}
+.hint{background:var(--sun-tint);border:2px dashed var(--sun);border-radius:14px;padding:10px 14px;margin:0 0 12px;font-weight:700}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn{font-family:var(--f-display);font-weight:600;cursor:pointer;background:var(--teal);color:#fff;border:3px solid var(--ink);border-radius:14px;padding:10px 18px;box-shadow:var(--shadow);transition:transform .1s}
+.btn:hover{transform:translateY(-2px)}
+.btn.ghost{background:var(--card);color:var(--ink)}
+.btn.sun{background:var(--sun);color:#14323B}
+
+/* results */
+.res-top{text-align:center}
+.res-top .big{font-size:3.2rem;line-height:1}
+.res-top h2{font-size:1.6rem;margin-top:6px}
+.badge{display:inline-block;background:var(--sun);color:#14323B;border:3px solid var(--ink);border-radius:18px;padding:8px 16px;font-family:var(--f-display);font-weight:700;margin:10px 0}
+.breakdown{display:grid;gap:12px;margin:18px 0}
+.brow{display:grid;grid-template-columns:130px 1fr 64px;gap:10px;align-items:center;font-weight:700}
+.brow .track{height:18px;background:var(--line);border-radius:10px;overflow:hidden}
+.brow .track i{display:block;height:100%;border-radius:10px}
+.brow .n{text-align:right;font-variant-numeric:tabular-nums}
+.tip{background:var(--teal-tint);border-radius:14px;padding:12px 14px;font-weight:700;margin-bottom:14px}
+.misses{margin:0 0 14px;padding:0;list-style:none;display:grid;gap:8px}
+.misses li{border:2px solid var(--line);border-radius:12px;padding:10px 12px;font-size:.92rem}
+.misses li b{display:block}
+.misses li span{color:var(--green);font-weight:800}
+@media (max-width:480px){.brow{grid-template-columns:96px 1fr 52px}}
+
+.say{position:fixed;left:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));max-width:300px;background:var(--ink);color:var(--paper);
+  border-radius:16px 16px 16px 4px;padding:12px 14px 12px 54px;font-weight:700;font-size:.9rem;box-shadow:0 8px 24px rgba(0,0,0,.3);z-index:50;transition:transform .3s,opacity .3s}
+.say::before{content:"🧪";position:absolute;left:12px;bottom:10px;font-size:1.9rem}
+.say.hide{transform:translateY(160%);opacity:0}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <svg class="mascot" viewBox="0 0 100 100" aria-hidden="true">
+      <path d="M40 12h20v22l16 40a10 10 0 0 1-9 14H33a10 10 0 0 1-9-14l16-40z" fill="#0FB5AE" stroke="#14323B" stroke-width="4"/>
+      <rect x="36" y="8" width="28" height="8" rx="4" fill="#FFC531" stroke="#14323B" stroke-width="4"/>
+      <path d="M31 66h38l4 10a8 8 0 0 1-7 11H34a8 8 0 0 1-7-11z" fill="#3B82D9" stroke="#14323B" stroke-width="4"/>
+      <circle cx="43" cy="80" r="4" fill="#14323B"/><circle cx="57" cy="80" r="4" fill="#14323B"/>
+      <path d="M44 88q6 5 12 0" stroke="#14323B" stroke-width="3" fill="none" stroke-linecap="round"/>
+    </svg>
+    <div class="tb">
+      <h1>Adam's Exam Prep</h1>
+      <span class="tag">CHAPTERS 3 · 4 · 5 · TEKS 5.7–5.8</span>
+    </div>
+    <div class="chip">🏅 Points <b id="score">0</b></div>
+  </header>
+  <main id="app"></main>
+</div>
+<div class="say hide" id="say"></div>
+
+<script>
+const CH={
+ 3:{name:'Force & Motion',who:'🚀',host:'Captain Push',topics:'Pushes & pulls, gravity, friction, balanced vs. unbalanced forces',color:'var(--c3)'},
+ 4:{name:'Energy & Circuits',who:'💡',host:'Sparky the Bulb',topics:'Forms of energy, closed circuits, conductors & insulators',color:'var(--c4)'},
+ 5:{name:'Light',who:'🌈',host:'Prism Pete',topics:'Straight-line travel, reflect, refract, absorb, shadows',color:'var(--c5)'}
+};
+const Q=[
+/* ---------- Chapter 3: Force & Motion ---------- */
+{c:3,q:"A force is a…",o:["push or pull","type of energy","kind of matter"],a:0,h:"Think of what your hands do to a door.",e:"A force is any push or pull. It can start, stop, or change the direction of motion."},
+{c:3,q:"What force pulls a dropped ball down to the ground?",o:["Friction","Magnetism","Gravity"],a:2,h:"It's the same force that keeps you from floating away.",e:"Gravity pulls objects toward Earth's center."},
+{c:3,q:"Two teams pull a rope with EQUAL force. What happens to the rope?",o:["It moves toward the stronger side","It does not move","It breaks in half"],a:1,h:"Equal and opposite… who wins?",e:"Equal, opposite forces are BALANCED. Balanced forces cause no change in motion."},
+{c:3,q:"Which forces make a still object start moving?",o:["Balanced forces","Unbalanced forces","No forces"],a:1,h:"Something has to 'win' the tug-of-war.",e:"Only UNBALANCED forces change an object's motion — start it, stop it, speed it up, or turn it."},
+{c:3,q:"Friction is a force that…",o:["speeds objects up","slows objects down when surfaces rub","pulls objects toward magnets"],a:1,h:"Rub your hands together fast. What do you feel?",e:"Friction acts when two surfaces rub. It works against motion and slows things down."},
+{c:3,q:"A toy car rolls FARTHEST on which surface?",o:["Carpet","Sandpaper","Smooth tile"],a:2,h:"Less rubbing = more rolling.",e:"Smooth tile has the least friction, so the car keeps rolling longer."},
+{c:3,q:"A book sits still on a table. The forces on it are…",o:["balanced","unbalanced","zero — no forces at all"],a:0,h:"Gravity still pulls it. What pushes back?",e:"Gravity pulls down and the table pushes up equally. The forces are balanced, so the book stays put."},
+{c:3,q:"You kick a soccer ball harder. The ball will…",o:["move a shorter distance","move a greater distance","not move at all"],a:1,h:"Bigger push, bigger result.",e:"A greater force causes a greater change in motion, so the ball travels farther."},
+{c:3,q:"Which force can act WITHOUT touching the object?",o:["Friction","Magnetism","A kick"],a:1,h:"Paperclips jump to it from a distance.",e:"Magnetism (and gravity) can pull on objects without touching them."},
+{c:3,q:"In an experiment testing how force affects a car, what should stay the SAME?",o:["Everything except the amount of force","The amount of force","Nothing — change everything"],a:0,h:"A fair test changes only ONE thing.",e:"In a fair test you change one variable (force) and keep everything else the same."},
+{c:3,q:"Why does a ball rolling on grass eventually stop?",o:["It runs out of energy on its own","Friction from the grass slows it","Gravity pushes it sideways"],a:1,h:"The grass rubs against the ball.",e:"Friction between the ball and the grass is an unbalanced force that slows it to a stop."},
+{c:3,q:"A heavier wagon needs ___ force to move than a light wagon.",o:["more","less","the same"],a:0,h:"Which is harder to push: empty or full?",e:"Objects with more mass need a greater force to start moving."},
+/* ---------- Chapter 4: Energy & Circuits ---------- */
+{c:4,q:"A guitar string vibrating is an example of which energy?",o:["Sound energy","Light energy","Electrical energy"],a:0,h:"You hear it with your ears.",e:"Vibrations make sound energy."},
+{c:4,q:"A rolling bowling ball has which kind of energy?",o:["Thermal","Mechanical","Sound"],a:1,h:"Energy of motion and position.",e:"Mechanical energy is the energy of moving objects."},
+{c:4,q:"Rubbing your hands together makes them warm. That's ___ energy.",o:["thermal","light","electrical"],a:0,h:"Warm = heat.",e:"Thermal energy is heat. Friction turned motion into thermal energy."},
+{c:4,q:"A lamp changes electrical energy into…",o:["sound and magnetism","light and thermal energy","mechanical energy only"],a:1,h:"Touch a bulb that's been on a while.",e:"A bulb gives off light AND gets warm — electrical energy becomes light and thermal energy."},
+{c:4,q:"For a bulb to light, the circuit must be…",o:["open","closed","cut in half"],a:1,h:"Electricity needs a complete loop.",e:"A CLOSED circuit is a complete path, so electricity can flow and light the bulb."},
+{c:4,q:"What does a switch do in a circuit?",o:["Makes more electricity","Opens or closes the path","Stores light"],a:1,h:"Think of your bedroom light.",e:"A switch opens the circuit (off) or closes it (on)."},
+{c:4,q:"Which material is a good CONDUCTOR of electricity?",o:["Rubber band","Copper wire","Wooden stick"],a:1,h:"Most metals let electricity flow.",e:"Copper is a metal and a great conductor. That's why wires are made of it."},
+{c:4,q:"Why are wires covered in plastic?",o:["Plastic is an insulator that keeps us safe","Plastic makes electricity faster","Plastic is a conductor"],a:0,h:"It blocks electricity from reaching your hand.",e:"Plastic is an INSULATOR. It stops electricity from flowing into you."},
+{c:4,q:"A circuit has a battery, wires, and a bulb, but one wire is loose. The bulb…",o:["glows brighter","stays off","flickers blue"],a:1,h:"Is the path complete?",e:"A loose wire makes an OPEN circuit. No complete path means no light."},
+{c:4,q:"What is the energy SOURCE in a simple circuit?",o:["The bulb","The wire","The battery"],a:2,h:"It's where the energy comes from.",e:"The battery supplies electrical energy to the circuit."},
+{c:4,q:"A solar panel changes light energy into…",o:["electrical energy","sound energy","magnetism"],a:0,h:"It powers calculators and houses.",e:"Solar panels change light energy into electrical energy."},
+{c:4,q:"Electricity flowing through a wire wrapped around a nail can make…",o:["a magnet","a rainbow","a sound wave"],a:0,h:"Electro + magnet.",e:"That's an electromagnet! Electricity can produce magnetism."},
+/* ---------- Chapter 5: Light ---------- */
+{c:5,q:"Light travels in…",o:["curvy lines","straight lines","circles"],a:1,h:"Think of a flashlight beam.",e:"Light travels in straight lines until it hits something."},
+{c:5,q:"When light BOUNCES off a mirror, it is…",o:["refracted","absorbed","reflected"],a:2,h:"You see yourself because of this.",e:"Reflection is light bouncing off a surface."},
+{c:5,q:"A pencil in a glass of water looks bent. Why?",o:["The light is refracted","The pencil really bent","The light is absorbed"],a:0,h:"Light changes direction when it goes from water to air.",e:"Refraction: light bends when it passes from one material into another."},
+{c:5,q:"A black shirt feels hot in the sun because it…",o:["reflects all light","absorbs light","refracts light"],a:1,h:"Dark colors soak it up.",e:"Dark colors ABSORB light, and that light turns into thermal energy."},
+{c:5,q:"Shadows form because light…",o:["bends around objects","travels in straight lines and is blocked","is made of sound"],a:1,h:"Light can't curve around your body.",e:"Light travels straight. When an object blocks it, a shadow forms behind the object."},
+{c:5,q:"Which material lets almost ALL light pass through?",o:["Clear glass","Wax paper","Wood"],a:0,h:"You can see clearly through it.",e:"Clear glass is TRANSPARENT — it lets light pass straight through."},
+{c:5,q:"Wax paper lets SOME light through. It is…",o:["transparent","translucent","opaque"],a:1,h:"Fuzzy, blurry view.",e:"TRANSLUCENT materials let some light through, so things look blurry."},
+{c:5,q:"A brick wall blocks ALL light. It is…",o:["opaque","translucent","transparent"],a:0,h:"No light gets through at all.",e:"OPAQUE materials block all light and make dark shadows."},
+{c:5,q:"A prism splits white light into a rainbow by…",o:["reflecting it","refracting it","absorbing it"],a:1,h:"Each color bends a different amount.",e:"A prism refracts light, and each color bends differently, spreading into a rainbow."},
+{c:5,q:"A magnifying lens makes things look bigger by…",o:["refracting light","absorbing light","blocking light"],a:0,h:"Light bends as it passes through the curved glass.",e:"A lens refracts (bends) light, which makes objects look larger."},
+{c:5,q:"You see a tree because light…",o:["comes from your eyes","reflects off the tree into your eyes","is absorbed by the air"],a:1,h:"Light has to reach your eyes.",e:"Light from the Sun bounces off the tree and travels into your eyes."},
+{c:5,q:"A white car stays cooler in the sun than a black car because white…",o:["absorbs more light","reflects more light","refracts all light"],a:1,h:"Light colors bounce it back.",e:"White reflects most light, so less is absorbed and turned into heat."}
+];
+
+/* ---------- state ---------- */
+let score=0, run=null;
+const $=s=>document.querySelector(s), app=$('#app');
+const load=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
+const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+let best=load('adamExamBest')||{};
+let sayT;
+function say(m){const el=$('#say');el.textContent=m;el.classList.remove('hide');clearTimeout(sayT);sayT=setTimeout(()=>el.classList.add('hide'),3800)}
+function addScore(n){score+=n;$('#score').textContent=score}
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+function prep(q){const idx=shuffle(q.o.map((_,i)=>i));return {...q,o:idx.map(i=>q.o[i]),a:idx.indexOf(q.a)}}
+
+/* ---------- home ---------- */
+function home(){
+  run=null;
+  const bestTxt=k=>best[k]!=null?'Best: '+best[k]+'%':'Not tried yet';
+  app.innerHTML=`<section class="card">
+    <h2>Pick what to practice</h2>
+    <p class="sub">Every question has a hint from the chapter buddy and a quick explanation. Finish to see which chapter needs more review.</p>
+    <div class="chapters">
+      ${[3,4,5].map(n=>`<button class="ch c${n}" data-mode="${n}">
+        <span class="who">${CH[n].who}</span><h3>Ch. ${n} · ${CH[n].name}</h3>
+        <span class="topics">${CH[n].topics}</span>
+        <span class="best">12 questions · ${bestTxt(n)}</span></button>`).join('')}
+      <button class="ch exam" data-mode="exam"><div class="row"><span class="who">🎯</span>
+        <div><h3>Full Practice Exam</h3><span class="topics">15 mixed questions from all three chapters, like the real test</span></div></div>
+        <span class="best">${bestTxt('exam')}</span></button>
+    </div></section>`;
+  app.querySelectorAll('.ch').forEach(b=>b.onclick=()=>start(b.dataset.mode));
+}
+
+function start(mode,list){
+  let qs;
+  if(list) qs=list;
+  else if(mode==='exam'){qs=[3,4,5].flatMap(n=>shuffle(Q.filter(q=>q.c===n)).slice(0,5))}
+  else qs=Q.filter(q=>q.c==mode);
+  run={mode,qs:shuffle(qs).map(prep),i:0,right:0,streak:0,log:[]};
+  say(mode==='exam'?"Full exam! Take your time and read every choice.":(mode==='miss'?"Round two on the tricky ones. You've got this!":`${CH[mode].host} is here to help with Chapter ${mode}!`));
+  ask();
+}
+
+/* ---------- question ---------- */
+function ask(){
+  const r=run, q=r.qs[r.i], n=r.qs.length, c=CH[q.c];
+  app.innerHTML=`<section class="card">
+    <div class="qhead"><span>Question ${r.i+1} of ${n}</span><span class="pill c${q.c}">${c.who} Ch. ${q.c} · ${c.name}</span></div>
+    <div class="bar"><i style="width:${r.i/n*100}%"></i></div>
+    <div class="qtext">${q.q}</div>
+    <div id="opts">${q.o.map((t,i)=>`<button class="opt" data-i="${i}"><span class="k">${'ABCD'[i]}</span>${t}</button>`).join('')}</div>
+    <div id="hintBox"></div><div id="fbBox"></div>
+    <div class="actions"><button class="btn ghost" id="hintBtn">💭 Hint from ${c.host}</button><button class="btn ghost" id="quit">Back to chapters</button></div>
+  </section>`;
+  app.querySelectorAll('.opt').forEach(b=>b.onclick=()=>answer(+b.dataset.i));
+  $('#hintBtn').onclick=()=>{r.usedHint=true;$('#hintBox').innerHTML=`<div class="hint">${c.who} ${q.h}</div>`;$('#hintBtn').disabled=true};
+  $('#quit').onclick=home;
+  r.usedHint=false;
+}
+
+function answer(i){
+  const r=run,q=r.qs[r.i],ok=i===q.a;
+  app.querySelectorAll('.opt').forEach((b,j)=>{b.disabled=true;if(j===q.a)b.classList.add('correct');if(j===i&&!ok)b.classList.add('wrong')});
+  $('#hintBtn').disabled=true;
+  r.log.push({q,ok});
+  if(ok){r.right++;r.streak++;const pts=r.usedHint?5:10;addScore(pts);
+    say(r.streak>=3?`🔥 ${r.streak} in a row! +${pts}`:`Nice! +${pts} points`)}
+  else r.streak=0;
+  const last=r.i===r.qs.length-1;
+  $('#fbBox').innerHTML=`<div class="fb ${ok?'ok':'no'}">${ok?'✅ Correct!':'❌ Not quite. The answer is <u>'+q.o[q.a]+'</u>.'} ${q.e}</div>`;
+  const acts=app.querySelector('.actions');
+  acts.innerHTML=`<button class="btn" id="next">${last?'See my report card →':'Next question →'}</button>`;
+  $('#next').onclick=()=>{r.i++; last?report():ask()};
+  $('#next').focus();
+}
+
+/* ---------- report card ---------- */
+function report(){
+  const r=run,n=r.qs.length,pct=Math.round(r.right/n*100);
+  if(r.mode!=='miss'){if(best[r.mode]==null||pct>best[r.mode]){best[r.mode]=pct;save('adamExamBest',best)}}
+  let big='🌟',badge='Science Explorer',msg='Good start! Review the ones you missed and try again.';
+  if(pct>=90){big='🏆';badge='Science Champion';msg="Outstanding! You're ready for the exam."}
+  else if(pct>=70){big='🥈';badge='Science Pro';msg='Solid work! A little review and you\'ll ace it.'}
+  const chs=[...new Set(r.log.map(l=>l.q.c))].sort();
+  const stats=chs.map(c=>{const L=r.log.filter(l=>l.q.c===c);return {c,right:L.filter(l=>l.ok).length,tot:L.length}});
+  const weak=stats.length>1?stats.slice().sort((a,b)=>a.right/a.tot-b.right/b.tot)[0]:null;
+  const misses=r.log.filter(l=>!l.ok);
+  app.innerHTML=`<section class="card">
+    <div class="res-top"><div class="big">${big}</div><h2>${r.right} of ${n} right · ${pct}%</h2>
+      <div class="badge">🏅 ${badge}</div><p class="sub">${msg}</p></div>
+    <h3>Score by chapter</h3>
+    <div class="breakdown">${stats.map(s=>`<div class="brow"><span>Ch. ${s.c} ${CH[s.c].who}</span>
+      <div class="track"><i style="width:${s.right/s.tot*100}%;background:${CH[s.c].color}"></i></div>
+      <span class="n">${s.right}/${s.tot}</span></div>`).join('')}</div>
+    ${weak&&weak.right<weak.tot?`<div class="tip">📌 Study tip: Chapter ${weak.c} (${CH[weak.c].name}) was the lowest. Practice it one more time before the exam.</div>`:''}
+    ${misses.length?`<h3>Questions to review</h3><ul class="misses">${misses.map(m=>`<li><b>${m.q.q}</b><span>✔ ${m.q.o[m.q.a]}</span> — ${m.q.e}</li>`).join('')}</ul>`:''}
+    <div class="actions">
+      ${misses.length?`<button class="btn sun" id="redo">Practice my ${misses.length} miss${misses.length>1?'es':''} ↺</button>`:''}
+      <button class="btn" id="again">Try again</button>
+      <button class="btn ghost" id="back">Back to chapters</button></div>
+  </section>`;
+  say(`You earned: ${badge}!`);
+  if(misses.length){const orig=misses.map(m=>Q.find(x=>x.q===m.q.q));$('#redo').onclick=()=>start('miss',orig)}
+  $('#again').onclick=()=>start(r.mode==='miss'?'exam':r.mode);
+  $('#back').onclick=home;
+}
+
+home();
+</script>
